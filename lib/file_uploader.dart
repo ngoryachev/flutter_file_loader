@@ -1,29 +1,3 @@
-//Требования по главному экрану:
-//  [✅, X] Кнопка [Сбросить] заблокирована, если файлов нет;
-//  [✅, X] Кнопка [Сохранить] заблокирована, если:
-//    Файлов нет;
-//    Процесс загрузки хотя бы одного файла не завершен.
-
-// ===
-
-//  [✅, X] При клике на [Сбросить] список файлов очищается, в том числе загружаемые в этот момент файлы.
-//  [✅, X] При клике на [Сохранить] появляется нотификация с текстом “Файлы сохранены”.
-//  [✅, ✅] При клике на элемент с текстом “Файлы” переходим на экран загрузки файлов.
-//  У кликабельного элемента должен быть один из подзаголовков с текстом:
-//    Нет файлов.
-//    “Кол-во файлов: N” - если все файлы успешно загружены, где N - это кол-во файлов.
-//    “Осталось загрузить: M. Всего файлов: N” - где M - это кол-во файлов, которые не в статусе Успешно загружен, а N - все файлы в любом статусе.
-//
-//Требования по экрану загрузки файлов:
-//  Если список файлов пуст, то на экране выводится текст “Нет файлов”.
-//  [✅, X] При клике на кнопку [Добавить файл] добавляется один элемент “Файл #N” в конец списка файлов.
-//  [✅, X] Если “Файл” попал в очередь на загрузку (Загружается), под этим файлом пишем текст “Загружается”;
-//  [✅, X] Если очередь по загрузке переполнена, под файлами, которые еще не загружены пишем текст “В ожидании”;
-//  [✅, X] Если “Файл” в статусе Успешно загружен, ничего под ним писать не надо;
-//  [✅, X] Любой файл в любом статусе можно удалить (см. скриншот).
-//  [✅, X] Кнопка [Добавить файл] видна только тогда, когда кол-во файлов < 30.
-//  [✅, X] Имя файла можно генерировать на свое усмотрение.
-
 import 'dart:async';
 import 'dart:math';
 
@@ -75,7 +49,7 @@ class FileUploader {
     _changeListeners = _changeListeners.rebuild((list) => list.remove(listener));
   }
 
-  String upload(String name) {
+  String upload(String namePrefix) {
     if (_uploadStatuses.length == _MAX_FILES_TOTAL) {
       throw 'max_limit_error';
     }
@@ -86,12 +60,14 @@ class FileUploader {
     final id = _uuid.v1();
 
     _uploadStatuses = _uploadStatuses.rebuild((statuses) {
-      statuses.add(FileUploadStatus(id, uploadState, name));
+      statuses.add(FileUploadStatus(id, uploadState, '$namePrefix${id.substring(0, 5)}'));
     });
 
     if (!needWait) {
       _startUploading(id);
     }
+
+    _notify();
 
     return id;
   }
@@ -103,8 +79,6 @@ class FileUploader {
     );
 
     _uploadOperations = _uploadOperations.rebuild((operations) => operations[id] = co);
-
-    _notify();
 
     co.value.then((_) => _handleOperationDone(id));
   }
@@ -149,9 +123,7 @@ class FileUploader {
   }
 
   String appendFile() {
-    int count = fileCount;
-
-    return upload('Файл #${count + 1}');
+    return upload('Файл #');
   }
 
   String getId(int index) => _uploadStatuses.toList()[index].id;

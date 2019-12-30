@@ -48,12 +48,12 @@ class _FileUploaderScreenState extends State<FileUploaderScreen> {
       body: Container(
         child: _buildFileList(),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: Visibility(visible: !manager.isFileCountLimit(), child: FloatingActionButton(
         onPressed: _addFile,
         tooltip: 'Add file',
         child: Icon(Icons.add),
       ),
-    );
+    ));
   }
 
   Widget _buildFileList() {
@@ -66,6 +66,12 @@ class _FileUploaderScreenState extends State<FileUploaderScreen> {
     return ListView.builder(
       itemCount: statuses.length,
       itemBuilder: (context, i) {
+        final subtitle = {
+          UploadState.uploaded: '',
+          UploadState.uploading: 'Загружается',
+          UploadState.waiting: 'В ожидании'
+        }[statuses[i].state];
+
         return ListTile(
           title: Text(statuses[i].name),
           trailing: IconButton(
@@ -74,7 +80,7 @@ class _FileUploaderScreenState extends State<FileUploaderScreen> {
               _removeFileByIndex(i);
             },
           ),
-          subtitle: statuses[i].state != UploadState.uploaded ? Text('Загружается') : null,
+          subtitle: Text(subtitle),
         );
       }
     );

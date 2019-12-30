@@ -33,6 +33,8 @@ class _MyHomePageState extends State<MyHomePage> {
   FileUploader manager;
   VoidCallback unsubscribe;
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   dispose() {
     super.dispose();
     unsubscribe();
@@ -41,6 +43,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void handleItemsChanged(Iterable<FileUploadStatus> statuses) {
     setState(() {
       this.statuses = manager.fileUploadStatuses.toList();
+    });
+  }
+
+  void _handleClickSave() {
+    manager.save().then((_) {
+      _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text('Файлы сохранены')));
     });
   }
 
@@ -62,6 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('Home page'),
       ),
@@ -82,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           FlatButton(
             child: Text('Сохранить'),
-            onPressed: manager.canSave() ? () { manager.save(); } : null,
+            onPressed: manager.canSave() ? _handleClickSave : null,
           )
         ],
       )
