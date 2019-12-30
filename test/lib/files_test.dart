@@ -53,8 +53,7 @@ void main() {
       fileUploadStatusesMatcher: (Iterable<FileUploadStatus> statuses) {
         FileUploadStatus first = statuses.first;
 
-        return first.name == 'Файл #1' &&
-          statuses.length == 1 && first.state == UploadState.uploaded;
+        return statuses.length == 1 && first.state == UploadState.uploaded;
       },
     );
   });
