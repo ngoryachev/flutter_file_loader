@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_file_loader/files.dart';
 
 import 'main.dart';
 
@@ -9,18 +10,31 @@ class FileUploaderScreen extends StatefulWidget {
 
 class _FileUploaderScreenState extends State<FileUploaderScreen> {
 
-  List<String> _files = superMegaGlobalFileList;
+  List<FileUploadStatus> statuses;
 
-  void _addFile() {
+  initState() {
+    super.initState();
+    statuses = manager.fileUploadStatuses.toList();
+    manager.addItemsChangeListener(handleItemsChanged);
+  }
+
+  dispose() {
+    super.dispose();
+    manager.removeItemsChangeListener(handleItemsChanged);
+  }
+
+  void handleItemsChanged(Iterable<FileUploadStatus> statuses) {
     setState(() {
-      _files.add("Файл ${_files.length}");
+      this.statuses = manager.fileUploadStatuses.toList();
     });
   }
 
+  void _addFile() {
+    manager.appendFile();
+  }
+
   void _removeFileByIndex(int index) {
-    setState(() {
-      _files.removeAt(index);
-    });
+    manager.delete(manager.getId(index));
   }
 
   @override
@@ -41,24 +55,24 @@ class _FileUploaderScreenState extends State<FileUploaderScreen> {
   }
 
   Widget _buildFileList() {
-    if (_files.isEmpty) {
+    if (statuses.isEmpty) {
       return Center(
         child: Text('Нет файлов')
       );
     }
 
     return ListView.builder(
-      itemCount: _files.length,
+      itemCount: statuses.length,
       itemBuilder: (context, i) {
         return ListTile(
-          title: Text(_files[i]),
+          title: Text(statuses[i].name),
           trailing: IconButton(
             icon: Icon(Icons.close),
             onPressed: () {
               _removeFileByIndex(i);
             },
           ),
-          subtitle: false ? Text('Загружается') : null,
+          subtitle: statuses[i].state != UploadState.uploaded ? Text('Загружается') : null,
         );
       }
     );

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_file_loader/files.dart';
 
 import 'file_uploader_screen.dart';
 
+final manager =  FileUploadManager();
 void main() => runApp(MyApp());
-
-// TODO Мега костыль, от которого очевидно следует избавиться в первую очередь
-// Переменная для обмена данными между экранами
-List<String> superMegaGlobalFileList = [];
 
 class MyApp extends StatelessWidget {
 
@@ -30,7 +28,24 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  bool _hasFiles = false;
+  List<FileUploadStatus> statuses;
+
+  initState() {
+    super.initState();
+    statuses = manager.fileUploadStatuses.toList();
+    manager.addItemsChangeListener(handleItemsChanged);
+  }
+
+  dispose() {
+    super.dispose();
+    manager.removeItemsChangeListener(handleItemsChanged);
+  }
+
+  void handleItemsChanged(Iterable<FileUploadStatus> statuses) {
+    setState(() {
+      this.statuses = manager.fileUploadStatuses.toList();
+    });
+  }
 
   void _navToFileUploadScreen() async {
     await Navigator.push(
@@ -39,22 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (BuildContext screenContext) => FileUploaderScreen(),
       ),
     );
-    _updateState();
-  }
-
-  void _clearFiles() {
-    superMegaGlobalFileList = [];
-    _updateState();
-  }
-
-  void _updateState() {
-    setState(() {
-      _hasFiles = superMegaGlobalFileList.isNotEmpty;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Home page'),
@@ -72,11 +76,11 @@ class _MyHomePageState extends State<MyHomePage> {
         children: <Widget>[
           FlatButton(
             child: Text('Сбросить'),
-            onPressed: _hasFiles ? _clearFiles : null,
+            onPressed: manager.canReset() ? (){ manager.reset(); } : null,
           ),
           FlatButton(
             child: Text('Сохранить'),
-            onPressed: _hasFiles ? () {} : null,
+            onPressed: manager.canSave() ? () { manager.save(); } : null,
           )
         ],
       )
@@ -84,15 +88,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Text _buildFileSubtitle() {
-    if (!_hasFiles) {
+    if (statuses.length == 0) {
       return Text("Нет файлов");
     }
-    // TODO Раскоментировать и реализовать очередь
-    // if (fileUploader.isUploading) {
-    //   final queueLen = fileUploader.queue.length;
-    //   final total = fileUploader.files.length + queueLen;
-    //   return Text("Осталось загрузить: $queueLen. Всего файлов: $total");
-    // }
-    return Text("Кол-во файлов: ${superMegaGlobalFileList.length} ");
+
+    final pending = statuses.where((status) => status.state != UploadState.uploaded).toList().length;
+    if (pending > 0) {
+     return Text("Осталось загрузить: $pending. Всего файлов: ${statuses.length}");
+    }
+
+    return Text("Кол-во файлов: ${statuses.length} ");
   }
 }

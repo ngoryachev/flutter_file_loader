@@ -40,6 +40,8 @@ enum UploadState {
 
 void noop() => {};
 
+typedef void ChangeListener(Iterable<FileUploadStatus> statuses);
+
 class FileUploadManager {
   static const int _MAX_SIMULTANEOUS_UPLOADING_FILES = 3;
   static const int _MAX_FILES_TOTAL = 30;
@@ -50,7 +52,7 @@ class FileUploadManager {
   BuiltList<FileUploadStatus> _uploadStatuses;
   BuiltMap<String, CancelableOperation> _uploadOperations;
 
-  VoidCallback _changeListener = noop;
+  BuiltList<ChangeListener> _changeListeners;
 
   final Random _random;
   final Uuid _uuid;
@@ -59,11 +61,18 @@ class FileUploadManager {
     // TODO load state from persistence
 
     _uploadStatuses = BuiltList();
+    _changeListeners = BuiltList();
     _uploadOperations = BuiltMap();
   }
 
-  set itemsChangeListener(VoidCallback callback) {
-    _changeListener = callback ?? noop;
+  VoidCallback addItemsChangeListener(ChangeListener listener) {
+    _changeListeners = _changeListeners.rebuild((list) => list.add(listener));
+
+    return () { removeItemsChangeListener(listener); };
+  }
+
+  void removeItemsChangeListener(ChangeListener listener) {
+    _changeListeners = _changeListeners.rebuild((list) => list.remove(listener));
   }
 
   String upload(String name) {
@@ -95,7 +104,7 @@ class FileUploadManager {
 
     _uploadOperations = _uploadOperations.rebuild((operations) => operations[id] = co);
 
-    _changeListener();
+    _notify();
 
     co.value.then((_) => _handleOperationDone(id));
   }
@@ -134,7 +143,7 @@ class FileUploadManager {
     _uploadOperations = BuiltMap();
     _uploadStatuses = BuiltList();
 
-    _changeListener();
+    _notify();
 
     return true;
   }
@@ -145,24 +154,27 @@ class FileUploadManager {
     return upload('Файл #${count + 1}');
   }
 
+  String getId(int index) => _uploadStatuses.toList()[index].id;
+
   void delete(String id) {
     _uploadOperations = _uploadOperations.rebuild((map) {
       CancelableOperation co = map.remove(id);
 
       if (co != null) {
         co.cancel();
-        _uploadStatuses = _uploadStatuses.rebuild((statuses) {
-          statuses.removeWhere((status) => status.id == id);
-        });
-
-        _changeListener();
       }
+
+      _uploadStatuses = _uploadStatuses.rebuild((statuses) {
+        statuses.removeWhere((status) => status.id == id);
+      });
+
+      _notify();
     });
 
     _handleUploadStatusesCountDecreased();
   }
 
-  Iterable<FileUploadStatus> get fileUploadStatuses => _uploadStatuses;
+  Iterable<FileUploadStatus> get fileUploadStatuses => _uploadStatuses.toBuiltList();
 
   _handleOperationDone(String id) {
     int index = _uploadStatuses.indexWhere((FileUploadStatus s) => s.id == id);
@@ -174,7 +186,7 @@ class FileUploadManager {
 
     _uploadOperations = _uploadOperations.rebuild((ops) => ops.remove(id));
 
-    _changeListener();
+    _notify();
 
     _handleUploadStatusesCountDecreased();
 
@@ -186,7 +198,7 @@ class FileUploadManager {
 
     _uploadOperations = _uploadOperations.rebuild((ops) => ops.remove(id));
 
-    _changeListener();
+    _notify();
 
     _handleUploadStatusesCountDecreased();
   }
@@ -224,6 +236,10 @@ class FileUploadManager {
 
     return Future.value();
   }
+
+  _notify() {
+    _changeListeners.forEach((Function cb) => cb(fileUploadStatuses));
+  }
 }
 
 @immutable
@@ -235,4 +251,9 @@ class FileUploadStatus {
   FileUploadStatus(this.id, this.state, this.name);
 
   FileUploadStatus setState(UploadState state) => FileUploadStatus(id, state, name);
+
+  @override
+  String toString() {
+    return 'FileUploadStatus{id: $id, state: $state, name: $name}';
+  }
 }
