@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_file_loader/file_uploader_inherited_widget.dart';
-import 'package:flutter_file_loader/files.dart';
+import 'package:flutter_file_loader/file_uploader.dart';
 
 import 'file_uploader_screen.dart';
 
-void main() => runApp(InheritedFileUploader(child: MyApp(), manager: FileUploadManager()));
+void main() => runApp(InheritedFileUploader(child: MyApp(), fileUploader: FileUploader()));
 
 class MyApp extends StatelessWidget {
 
@@ -30,7 +30,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<FileUploadStatus> statuses;
 
-  FileUploadManager manager;
+  FileUploader manager;
   VoidCallback unsubscribe;
 
   dispose() {
@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     if (manager == null) {
-      manager = InheritedFileUploader.of(context).manager;
+      manager = InheritedFileUploader.of(context).fileUploader;
       statuses = manager.fileUploadStatuses.toList();
       unsubscribe = manager.addItemsChangeListener(handleItemsChanged);
     }

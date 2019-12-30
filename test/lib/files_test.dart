@@ -1,10 +1,10 @@
-import 'package:flutter_file_loader/files.dart';
+import 'package:flutter_file_loader/file_uploader.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matcher/matcher.dart';
 
 void main() {
-  testApi(FileUploadManager manager, {
+  testApi(FileUploader manager, {
     bool canSave,
     bool canReset,
     int fileCount,
@@ -20,7 +20,7 @@ void main() {
   }
 
   test('creation ok', () async {
-    final manager = FileUploadManager();
+    final manager = FileUploader();
     testApi(manager,
       canSave: false,
       canReset: false,
@@ -31,7 +31,7 @@ void main() {
   });
 
   test('add one file', () async {
-    final manager = FileUploadManager();
+    final manager = FileUploader();
     final id = manager.appendFile();
     testApi(manager,
       canSave: false,
@@ -60,7 +60,7 @@ void main() {
   });
 
   test('add one file and cancel', () async {
-    final manager = FileUploadManager();
+    final manager = FileUploader();
     manager.appendFile();
 
     await Future.delayed(Duration(milliseconds: 500));
@@ -69,13 +69,13 @@ void main() {
 
     testApi(manager, fileCount: 0);
 
-    await Future.delayed(Duration(seconds: FileUploadManager.UPLOAD_DURATION_MAX));
+    await Future.delayed(Duration(seconds: FileUploader.UPLOAD_DURATION_MAX));
 
     testApi(manager, fileCount: 0);
   });
 
   test('simultaneous loading files test', () async {
-    final manager = FileUploadManager();
+    final manager = FileUploader();
     manager.appendFile();
     manager.appendFile();
     manager.appendFile();
@@ -91,7 +91,7 @@ void main() {
   });
 
   test('delete file test', () async {
-    final manager = FileUploadManager();
+    final manager = FileUploader();
     manager.appendFile();
     final list = manager.fileUploadStatuses.toList();
     expect(list[0].state, UploadState.uploading);
@@ -102,7 +102,7 @@ void main() {
   });
 
   test('after waiting file become uploading', () async {
-    final manager = FileUploadManager();
+    final manager = FileUploader();
     final id1 = manager.appendFile();
     final id2 = manager.appendFile();
     final id3 = manager.appendFile();

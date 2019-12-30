@@ -42,12 +42,12 @@ void noop() => {};
 
 typedef void ChangeListener(Iterable<FileUploadStatus> statuses);
 
-class FileUploadManager {
+class FileUploader {
   static const int _MAX_SIMULTANEOUS_UPLOADING_FILES = 3;
   static const int _MAX_FILES_TOTAL = 30;
 
   static const int UPLOAD_DURATION_MIN = 1;
-  static const int UPLOAD_DURATION_MAX = 2;
+  static const int UPLOAD_DURATION_MAX = 5;
 
   BuiltList<FileUploadStatus> _uploadStatuses;
   BuiltMap<String, CancelableOperation> _uploadOperations;
@@ -57,7 +57,7 @@ class FileUploadManager {
   final Random _random;
   final Uuid _uuid;
 
-  FileUploadManager(): _random = Random(), _uuid = Uuid() {
+  FileUploader(): _random = Random(), _uuid = Uuid() {
     // TODO load state from persistence
 
     _uploadStatuses = BuiltList();
@@ -251,9 +251,4 @@ class FileUploadStatus {
   FileUploadStatus(this.id, this.state, this.name);
 
   FileUploadStatus setState(UploadState state) => FileUploadStatus(id, state, name);
-
-  @override
-  String toString() {
-    return 'FileUploadStatus{id: $id, state: $state, name: $name}';
-  }
 }

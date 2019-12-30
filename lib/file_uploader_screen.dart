@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_file_loader/file_uploader_inherited_widget.dart';
-import 'package:flutter_file_loader/files.dart';
+import 'package:flutter_file_loader/file_uploader.dart';
 
 class FileUploaderScreen extends StatefulWidget {
   @override
@@ -11,7 +11,7 @@ class _FileUploaderScreenState extends State<FileUploaderScreen> {
 
   List<FileUploadStatus> statuses;
 
-  FileUploadManager manager;
+  FileUploader manager;
   VoidCallback unsubscribe;
 
   dispose() {
@@ -36,7 +36,7 @@ class _FileUploaderScreenState extends State<FileUploaderScreen> {
   @override
   Widget build(BuildContext context) {
     if (manager == null) {
-      manager = InheritedFileUploader.of(context).manager;
+      manager = InheritedFileUploader.of(context).fileUploader;
       statuses = manager.fileUploadStatuses.toList();
       unsubscribe = manager.addItemsChangeListener(handleItemsChanged);
     }
